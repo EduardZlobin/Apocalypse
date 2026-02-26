@@ -402,11 +402,11 @@
       if(kind==="bad") statusText.classList.add("pillBad");
     }
 
-    function lockActions(locked){
-      btnFire.disabled = locked;
-      btnCoal.disabled = locked || !(state.profile && state.profile.coal > 0);
-      btnFuel.disabled = locked || !(state.profile && state.profile.fuel > 0);
-    }
+   function lockActions(locked){
+  btnFire.disabled = locked; // 🔥 можно всегда, если не locked
+  btnCoal.disabled = locked || !(state.profile && state.profile.coal > 0);
+  btnFuel.disabled = locked || !(state.profile && state.profile.fuel > 0);
+}
 
     function effectiveRemainingHours(){
       if(!state.fire) return null;
@@ -492,23 +492,23 @@
     }
 
     async function loadProfile(){
-      if(!state.session) { state.profile = null; return; }
-      const uid = state.session.user.id;
+  if(!state.session) { state.profile = null; return; }
+  const uid = state.session.user.id;
 
-      const { data, error } = await sb
-        .from("profiles")
-        .select("user_id, username, coal, fuel, streak, last_feed_at, last_streak_day")
-        .eq("user_id", uid)
-        .single();
+  const { data, error } = await sb
+    .from("profiles")
+    .select("user_id, username, coal, fuel, streak, last_feed_at, last_streak_day")
+    .eq("user_id", uid)
+    .maybeSingle(); // ✅ вместо single()
 
-      if(error){
-        // если профиля нет — покажем мягкую подсказку
-        console.warn("Profile read error:", error);
-        state.profile = null;
-        return;
-      }
-      state.profile = data;
-    }
+  if(error){
+    console.error(error);
+    setStatus("Не могу прочитать profiles (проверь RLS).", "bad");
+    return;
+  }
+
+  state.profile = data; // будет null, если строка не существует
+}
 
     async function loadLogs(){
       const { data, error } = await sb
@@ -632,18 +632,27 @@
     btnRefresh.addEventListener("click", refreshAll);
 
     // init
-    (async function init(){
-      const { data } = await sb.auth.getSession();
-      state.session = data.session || null;
+    async function ensureProfile(){
+  if(!state.session) return;
+  const { error } = await sb.rpc("ensure_profile");
+  if(error) console.error("ensure_profile error:", error);
+}
 
-      sb.auth.onAuthStateChange(async (_event, session) => {
-        state.session = session;
-        await refreshAll();
-      });
+(async function init(){
+  const { data } = await sb.auth.getSession();
+  state.session = data.session || null;
 
-      await refreshAll();
-      setStatus("Готов. Это не сайт — это система жизнеобеспечения.", "ok");
-    })();
+  if(state.session) await ensureProfile();  // ✅ добавили
+
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    state.session = session;
+    if(state.session) await ensureProfile(); // ✅ добавили
+    await refreshAll();
+  });
+
+  await refreshAll();
+  setStatus("Готов. Это не сайт — это система жизнеобеспечения.", "ok");
+})();
   </script>
 </body>
 </html>
