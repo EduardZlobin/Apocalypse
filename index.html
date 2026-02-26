@@ -284,7 +284,7 @@
           <div class="ring2"></div>
 
           <button class="fireBtn" id="btnFire" disabled title="Подкинуть дрова (+24ч, кулдаун 20ч)">
-            <div class="emoji">🔥</div>
+            <div class="emoji" id="fireEmoji">🔥</div>
           </button>
 
           <div class="inv">
@@ -538,6 +538,7 @@
 
       if(state.fire){
         const rem = effectiveRemainingHours();
+        updateFireEmoji(rem);
         remainText.textContent = fmtHours(rem);
 
         const effectActive = state.fire.multiplier_until && new Date(state.fire.multiplier_until).getTime() > Date.now();
@@ -572,6 +573,24 @@
       lockActions(!loggedIn);
       whoText.textContent = loggedIn ? "Ваша ответственность: включена" : "Войдите, чтобы подкинуть дрова";
     }
+
+function updateFireEmoji(remH){
+  const el = document.getElementById("fireEmoji");
+  if(!el || remH == null) return;
+
+  if(remH <= 0){
+    el.textContent = "💀";
+  }
+  else if(remH < 24){
+    el.textContent = "♨️";
+  }
+  else if(remH >= 24*10){
+    el.textContent = "🌋";
+  }
+  else{
+    el.textContent = "🔥";
+  }
+}
 
     // ===== Data loaders
     async function ensureProfile(){
