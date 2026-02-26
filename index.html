@@ -350,6 +350,7 @@
     const btnLogin = document.getElementById("btnLogin");
     const btnLogout = document.getElementById("btnLogout");
     const btnFire = document.getElementById("btnFire");
+    btnFire.disabled = !state.session;
     const btnCoal = document.getElementById("btnCoal");
     const btnFuel = document.getElementById("btnFuel");
     const btnRefresh = document.getElementById("btnRefresh");
@@ -590,43 +591,57 @@
     // =========================
     // ACTIONS (RPC)
     // =========================
-    async function callFeed(use_item){
-      try{
-        lockActions(true);
-        setStatus("Запрос к ядру…", "info");
+    async function callFeed(use_item) {
+  console.log("RPC feed_fire ->", use_item);
+  try {
+    lockActions(true);
+    setStatus("Запрос к ядру…", "info");
 
-        const { data, error } = await sb.rpc("feed_fire", { use_item });
+    const res = await sb.rpc("feed_fire", { use_item });
+    console.log("RPC result:", res);
 
-        if(error){
-          console.error(error);
-          const msg = (error.message || "").toString();
+    const { data, error } = res;
 
-          if(msg.includes("COOLDOWN")){
-            setStatus("Кулдаун: ещё рано. (Смотри чип 'Кулдаун')", "bad");
-          }else if(msg.includes("NO_COAL")){
-            setStatus("Нет угля в инвентаре.", "bad");
-          }else if(msg.includes("NO_FUEL")){
-            setStatus("Нет топлива в инвентаре.", "bad");
-          }else if(msg.includes("NOT_AUTHENTICATED")){
-            setStatus("Нужно войти.", "bad");
-          }else{
-            setStatus("RPC ошибка: " + msg, "bad");
-          }
-          return;
-        }
+    if (error) {
+      console.error("RPC error:", error);
+      const msg = (error.message || "").toString();
 
-        if(data?.fire) state.fire = data.fire;
-        if(data?.profile) state.profile = data.profile;
-
-        setStatus("Готово. Мир отложен на потом.", "ok");
-        await loadLogs();
-      } finally {
-        lockActions(false);
-        render();
+      if (msg.includes("COOLDOWN")) {
+        setStatus("Кулдаун: ещё рано. (Смотри чип 'Кулдаун')", "bad");
+      } else if (msg.includes("NO_COAL")) {
+        setStatus("Нет угля в инвентаре.", "bad");
+      } else if (msg.includes("NO_FUEL")) {
+        setStatus("Нет топлива в инвентаре.", "bad");
+      } else if (msg.includes("NOT_AUTHENTICATED")) {
+        setStatus("Нужно войти.", "bad");
+      } else {
+        setStatus("RPC ошибка: " + msg, "bad");
       }
+      return;
     }
 
-    btnFire.addEventListener("click", ()=> callFeed("wood"));
+    console.log("RPC data:", data);
+
+    if (data?.fire) state.fire = data.fire;
+    if (data?.profile) state.profile = data.profile;
+
+    setStatus("Готово. Мир отложен на потом.", "ok");
+    await loadLogs();
+await loadFire();
+await loadProfile();
+  } catch (e) {
+    console.error("callFeed crash:", e);
+    setStatus("Ошибка JS: " + (e?.message || e), "bad");
+  } finally {
+    lockActions(false);
+    render();
+  }
+}
+
+    btnFire.addEventListener("click", ()=> {
+  console.log("🔥 click");
+  callFeed("wood");
+});
     btnCoal.addEventListener("click", ()=> callFeed("coal"));
     btnFuel.addEventListener("click", ()=> callFeed("fuel"));
     btnRefresh.addEventListener("click", refreshAll);
