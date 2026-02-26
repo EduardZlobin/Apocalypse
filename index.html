@@ -1,311 +1,92 @@
-<script>
-  // =========================
-  // 1) ВСТАВЬ СЮДА СВОИ ДАННЫЕ
-  // =========================
-  const SUPABASE_URL = "https://vskoiojbedimfdatepqy.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_VcqtTyBpAwlpJuwh_Wc0tw_IPxVIsgP";
-  const SITE_URL = "https://eduardzlobin.github.io/Apocalypse";
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Apocalypse — Flame</title>
 
-  // ✅ клиент Supabase (назовём sb, чтобы не путаться с window.supabase)
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // UI refs
-  const btnLogin = document.getElementById("btnLogin");
-  const btnLogout = document.getElementById("btnLogout");
-  const btnFire = document.getElementById("btnFire");
-  const btnCoal = document.getElementById("btnCoal");
-  const btnFuel = document.getElementById("btnFuel");
-  const btnRefresh = document.getElementById("btnRefresh");
-
-  const remainText = document.getElementById("remainText");
-  const burnText = document.getElementById("burnText");
-  const untilText = document.getElementById("untilText");
-  const statusText = document.getElementById("statusText");
-  const whoText = document.getElementById("whoText");
-
-  const coalCount = document.getElementById("coalCount");
-  const fuelCount = document.getElementById("fuelCount");
-
-  const chipUser = document.getElementById("chipUser");
-  const chipCooldown = document.getElementById("chipCooldown");
-  const chipStreak = document.getElementById("chipStreak");
-
-  const logBox = document.getElementById("logBox");
-
-  let state = {
-    session: null,
-    fire: null,
-    profile: null,
-    tickTimer: null
-  };
-
-  function fmtDT(x){
-    if(!x) return "—";
-    const d = new Date(x);
-    return d.toLocaleString();
-  }
-
-  function fmtHours(h){
-    if(h === null || h === undefined || isNaN(h)) return "—";
-    const sign = h >= 0 ? "" : "-";
-    h = Math.abs(h);
-    const days = Math.floor(h / 24);
-    const hours = Math.floor(h % 24);
-    const mins = Math.floor((h*60) % 60);
-    const parts = [];
-    if(days) parts.push(`${days}д`);
-    if(hours || days) parts.push(`${hours}ч`);
-    parts.push(`${mins}м`);
-    return sign + parts.join(" ");
-  }
-
-  function setStatus(msg, kind="info"){
-    statusText.textContent = msg;
-    statusText.className = "";
-    if(kind==="ok") statusText.classList.add("pillOk");
-    if(kind==="bad") statusText.classList.add("pillBad");
-  }
-
-  function lockActions(locked){
-    btnFire.disabled = locked;
-    btnCoal.disabled = locked || !(state.profile && state.profile.coal > 0);
-    btnFuel.disabled = locked || !(state.profile && state.profile.fuel > 0);
-  }
-
-  function effectiveRemainingHours(){
-    if(!state.fire) return null;
-    const now = Date.now();
-    const exp = new Date(state.fire.expires_at).getTime();
-    let remH = (exp - now)/3600000;
-
-    if(state.fire.multiplier_until && new Date(state.fire.multiplier_until).getTime() > now){
-      const m = state.fire.burn_multiplier || 1.0;
-      if(m > 0) remH = remH / m;
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:#070812;
+      color:white;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+      flex-direction:column;
+      gap:20px;
     }
-    return remH;
-  }
-
-  function render(){
-    const loggedIn = !!state.session;
-    btnLogin.style.display = loggedIn ? "none" : "";
-    btnLogout.style.display = loggedIn ? "" : "none";
-
-    if(state.profile){
-      coalCount.textContent = state.profile.coal ?? 0;
-      fuelCount.textContent = state.profile.fuel ?? 0;
-      chipUser.textContent = `Пользователь: ${state.profile.username || (state.session?.user?.user_metadata?.full_name ?? "Discord User")}`;
-      chipStreak.textContent = `Стрик: ${state.profile.streak ?? 0}`;
-
-      const lf = state.profile.last_feed_at ? new Date(state.profile.last_feed_at).getTime() : 0;
-      const next = lf ? lf + 20*3600*1000 : 0;
-      chipCooldown.textContent = (next && next > Date.now())
-        ? `Кулдаун: до ${new Date(next).toLocaleString()}`
-        : "Кулдаун: готов";
-    }else{
-      coalCount.textContent = "0";
-      fuelCount.textContent = "0";
-      chipUser.textContent = "Пользователь: —";
-      chipStreak.textContent = "Стрик: —";
-      chipCooldown.textContent = "Кулдаун: —";
+    button{
+      padding:12px 20px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      font-size:16px;
     }
+  </style>
+</head>
 
-    if(state.fire){
-      const rem = effectiveRemainingHours();
-      remainText.textContent = fmtHours(rem);
+<body>
 
-      const effectActive = state.fire.multiplier_until && new Date(state.fire.multiplier_until).getTime() > Date.now();
-      burnText.textContent = effectActive ? `x${state.fire.burn_multiplier}` : "x1.0";
-      untilText.textContent = effectActive ? fmtDT(state.fire.multiplier_until) : "—";
+<h1>🔥 Apocalypse Flame</h1>
 
-      if(rem !== null){
-        if(rem <= 0){
-          setStatus("Огонь потух. Мир готовит актёрский состав для катаклизма…", "bad");
-        }else if(rem < 6){
-          setStatus("КРИТИЧНО: осталось мало. Кто-то должен помнить кнопку.", "bad");
-        }else{
-          setStatus("Огонь жив. Пока.", "ok");
-        }
-      }
-    }else{
-      remainText.textContent = "—";
-      burnText.textContent = "—";
-      untilText.textContent = "—";
-    }
+<button id="login">Войти через Discord</button>
+<button id="logout" style="display:none;">Выйти</button>
 
-    lockActions(!loggedIn);
-    whoText.textContent = loggedIn ? "Ваша ответственность: включена" : "Войдите, чтобы подкинуть дрова";
-  }
+<div id="status">загрузка...</div>
 
-  async function loadFire(){
-    const { data, error } = await sb
-      .from("fire")
-      .select("expires_at, burn_multiplier, multiplier_until")
-      .eq("id", 1)
-      .single();
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-    if(error){
-      console.error(error);
-      setStatus("Не могу прочитать fire (проверь RLS/policies).", "bad");
-      return;
-    }
-    state.fire = data;
-  }
+const SUPABASE_URL = "https://vskoiojbedimfdatepqy.supabase.co";
+const SUPABASE_KEY = "sb_publishable_VcqtTyBpAwlpJuwh_Wc0tw_IPxVIsgP";
+const SITE_URL = "https://eduardzlobin.github.io/Apocalypse";
 
-  async function loadProfile(){
-    if(!state.session) { state.profile = null; return; }
-    const uid = state.session.user.id;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const { data, error } = await sb
-      .from("profiles")
-      .select("user_id, username, coal, fuel, streak, last_feed_at, last_streak_day")
-      .eq("user_id", uid)
-      .single();
+const loginBtn = document.getElementById("login");
+const logoutBtn = document.getElementById("logout");
+const status = document.getElementById("status");
 
-    if(error){
-      console.error(error);
-      setStatus("Не могу прочитать profiles (проверь RLS и user_id uuid).", "bad");
-      return;
-    }
-    state.profile = data;
-  }
+function setStatus(t){ status.textContent = t }
 
-  async function loadLogs(){
-    const { data, error } = await sb
-      .from("fire_log")
-      .select("type, at, delta_hours, remaining_before, remaining_after, user_id")
-      .order("at", { ascending: false })
-      .limit(30);
-
-    if(error){
-      console.error(error);
-      setStatus("Не могу прочитать fire_log (проверь RLS).", "bad");
-      return;
-    }
-
-    logBox.innerHTML = "";
-    for(const row of data){
-      const el = document.createElement("div");
-      el.className = "logItem";
-
-      const t = row.type || "—";
-      const time = row.at ? new Date(row.at).toLocaleString() : "—";
-      const dh = row.delta_hours ?? 0;
-
-      let line = "";
-      if(t === "FEED"){
-        line = dh > 0 ? `Подкинули: +${dh}ч` : "Подкинули";
-      }else if(t === "EVENT"){
-        line = dh !== 0 ? `Событие: ${dh>0?"+":""}${dh}ч` : "Событие (модификатор/эффект)";
-      }else if(t === "CATASTROPHE"){
-        line = "Катаклизм: огонь потух";
-      }else{
-        line = "Запись";
-      }
-
-      el.innerHTML = `
-        <div class="logTop">
-          <div class="logType">${t}</div>
-          <div class="logTime">${time}</div>
-        </div>
-        <div class="logBody">
-          ${line}<br/>
-          До: <b>${fmtHours(row.remaining_before)}</b> → После: <b>${fmtHours(row.remaining_after)}</b>
-        </div>
-      `;
-      logBox.appendChild(el);
-    }
-  }
-
-  function startTicker(){
-    if(state.tickTimer) clearInterval(state.tickTimer);
-    state.tickTimer = setInterval(()=>render(), 1000);
-  }
-
-  async function refreshAll(){
-    await loadFire();
-    await loadProfile();
-    await loadLogs();
-    render();
-    startTicker();
-  }
-
-  // =========================
-  // AUTH
-  // =========================
-  btnLogin.addEventListener("click", async () => {
-    setStatus("Открываю Discord…", "info");
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: "discord",
-      options: { redirectTo: SITE_URL }
-    });
-    if(error){
-      console.error(error);
-      setStatus("Ошибка логина Discord. Проверь Redirect URLs.", "bad");
-    }
+loginBtn.onclick = async ()=>{
+  setStatus("Открываю Discord...");
+  const { error } = await sb.auth.signInWithOAuth({
+    provider:"discord",
+    options:{ redirectTo:SITE_URL }
   });
-
-  btnLogout.addEventListener("click", async () => {
-    await sb.auth.signOut();
-    state.session = null;
-    state.profile = null;
-    render();
-  });
-
-  // =========================
-  // ACTIONS (RPC)
-  // =========================
-  async function callFeed(use_item){
-    try{
-      lockActions(true);
-      setStatus("Запрос к ядру…", "info");
-
-      const { data, error } = await sb.rpc("feed_fire", { use_item });
-
-      if(error){
-        console.error(error);
-        const msg = (error.message || "").toString();
-
-        if(msg.includes("COOLDOWN")){
-          setStatus("Кулдаун: ещё рано. (Смотри чип 'Кулдаун')", "bad");
-        }else if(msg.includes("NO_COAL")){
-          setStatus("Нет угля в инвентаре.", "bad");
-        }else if(msg.includes("NO_FUEL")){
-          setStatus("Нет топлива в инвентаре.", "bad");
-        }else if(msg.includes("NOT_AUTHENTICATED")){
-          setStatus("Нужно войти.", "bad");
-        }else{
-          setStatus("RPC ошибка: " + msg, "bad");
-        }
-        return;
-      }
-
-      if(data?.fire) state.fire = data.fire;
-      if(data?.profile) state.profile = data.profile;
-
-      setStatus("Готово. Мир отложен на потом.", "ok");
-      await loadLogs();
-    } finally {
-      lockActions(false);
-      render();
-    }
+  if(error){
+    console.error(error);
+    setStatus("Ошибка логина");
   }
+};
 
-  btnFire.addEventListener("click", ()=> callFeed("wood"));
-  btnCoal.addEventListener("click", ()=> callFeed("coal"));
-  btnFuel.addEventListener("click", ()=> callFeed("fuel"));
-  btnRefresh.addEventListener("click", refreshAll);
+logoutBtn.onclick = async ()=>{
+  await sb.auth.signOut();
+  location.reload();
+};
 
-  // init
-  (async function init(){
-    const { data } = await sb.auth.getSession();
-    state.session = data.session || null;
+const { data } = await sb.auth.getSession();
 
-    sb.auth.onAuthStateChange(async (_event, session) => {
-      state.session = session;
-      await refreshAll();
-    });
+if(data.session){
+  setStatus("Ты залогинен");
+  loginBtn.style.display="none";
+  logoutBtn.style.display="block";
+}else{
+  setStatus("Не залогинен");
+}
 
-    await refreshAll();
-    setStatus("Готов. Если что — это не сайт, это система жизнеобеспечения.", "ok");
-  })();
+sb.auth.onAuthStateChange((_e,session)=>{
+  if(session){
+    loginBtn.style.display="none";
+    logoutBtn.style.display="block";
+    setStatus("Ты залогинен");
+  }
+});
 </script>
+
+</body>
+</html>
