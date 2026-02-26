@@ -6,7 +6,7 @@
   <title>Apocalypse — Daily Flame</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
   <style>
     :root{
       --bg0:#070812;
@@ -649,42 +649,43 @@
     }
 
     function buildChart(){
-      const ctx = document.getElementById("chart");
-      if(!ctx) return;
+  const canvas = document.getElementById("chart");
+  if(!canvas) return;
 
-      // точки — по remaining_after; пропускаем null
-      const pts = (state.logs || [])
-        .slice()
-        .reverse()
-        .filter(x => x.remaining_after != null && x.at != null)
-        .map(x => ({ x: new Date(x.at), y: Number(x.remaining_after) }));
+  // если Chart.js уже повесил инстанс на этот canvas — уничтожаем
+  const old = Chart.getChart(canvas);
+  if(old) old.destroy();
 
-      const data = {
-        datasets: [{
-          label: "Оставалось (часы)",
-          data: pts,
-          tension: 0.25,
-          pointRadius: 0,
-          borderWidth: 2
-        }]
-      };
+  const pts = (state.logs || [])
+    .slice()
+    .reverse()
+    .filter(x => x.remaining_after != null && x.at != null)
+    .map(x => ({ x: new Date(x.at), y: Number(x.remaining_after) }));
 
-      const options = {
-        responsive: true,
-        parsing: false,
-        scales: {
-          x: { type: "time", time: { tooltipFormat: "dd.MM.yyyy HH:mm" } },
-          y: { beginAtZero: true }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: true }
-        }
-      };
-
-      if(chart) chart.destroy();
-      chart = new Chart(ctx, { type: "line", data, options });
+  chart = new Chart(canvas, {
+    type: "line",
+    data: {
+      datasets: [{
+        label: "Оставалось (часы)",
+        data: pts,
+        tension: 0.25,
+        pointRadius: 0,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      parsing: false,
+      scales: {
+        x: { type: "time" },
+        y: { beginAtZero: true }
+      },
+      plugins: {
+        legend: { display: false }
+      }
     }
+  });
+}
 
     function startTicker(){
       if(state.tickTimer) clearInterval(state.tickTimer);
