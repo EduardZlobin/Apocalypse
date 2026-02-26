@@ -7,6 +7,7 @@
 
   <!-- Supabase JS (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
 
   <style>
     :root{
@@ -346,7 +347,7 @@ const SUPABASE_KEY = "sb_publishable_VcqtTyBpAwlpJuwh_Wc0tw_IPxVIsgP";
     // GitHub Pages path
     const SITE_URL = "https://eduardzlobin.github.io/Apocalypse";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // UI refs
     const btnLogin = document.getElementById("btnLogin");
