@@ -510,47 +510,52 @@
   state.profile = data; // будет null, если строка не существует
 }
 
-    async function loadLogs(){
-      const { data, error } = await sb
-        .from("fire_log")
-        .select("type, at, delta_hours, remaining_before, remaining_after, user_id")
-        .order("at", { ascending: false })
-        .limit(30);
+async function loadLogs(){
+  try{
+    const { data, error } = await sb
+      .from("fire_log")
+      .select("type, at, delta_hours, remaining_before, remaining_after, user_id")
+      .order("at", { ascending: false })
+      .limit(30);
 
-      if(error){
-        console.error(error);
-        setStatus("Не могу прочитать fire_log (проверь RLS).", "bad");
-        return;
-      }
-
-      logBox.innerHTML = "";
-      for(const row of data){
-        const el = document.createElement("div");
-        el.className = "logItem";
-
-        const t = row.type || "—";
-        const time = row.at ? new Date(row.at).toLocaleString() : "—";
-        const dh = row.delta_hours ?? 0;
-
-        let line = "";
-        if(t === "FEED") line = dh > 0 ? `Подкинули: +${dh}ч` : "Подкинули";
-        else if(t === "EVENT") line = dh !== 0 ? `Событие: ${dh>0?"+":""}${dh}ч` : "Событие (модификатор/эффект)";
-        else if(t === "CATASTROPHE") line = "Катаклизм: огонь потух";
-        else line = "Запись";
-
-        el.innerHTML = `
-          <div class="logTop">
-            <div class="logType">${t}</div>
-            <div class="logTime">${time}</div>
-          </div>
-          <div class="logBody">
-            ${line}<br/>
-            До: <b>${fmtHours(row.remaining_before)}</b> → После: <b>${fmtHours(row.remaining_after)}</b>
-          </div>
-        `;
-        logBox.appendChild(el);
-      }
+    if(error){
+      console.error("fire_log error:", error);
+      // не убиваем сайт из-за логов — просто оставим старое/пустое
+      return;
     }
+
+    logBox.innerHTML = "";
+    for(const row of data){
+      const el = document.createElement("div");
+      el.className = "logItem";
+
+      const t = row.type || "—";
+      const time = row.at ? new Date(row.at).toLocaleString() : "—";
+      const dh = row.delta_hours ?? 0;
+
+      let line = "";
+      if(t === "FEED") line = dh > 0 ? `Подкинули: +${dh}ч` : "Подкинули";
+      else if(t === "EVENT") line = dh !== 0 ? `Событие: ${dh>0?"+":""}${dh}ч` : "Событие (модификатор/эффект)";
+      else if(t === "CATASTROPHE") line = "Катаклизм: огонь потух";
+      else line = "Запись";
+
+      el.innerHTML = `
+        <div class="logTop">
+          <div class="logType">${t}</div>
+          <div class="logTime">${time}</div>
+        </div>
+        <div class="logBody">
+          ${line}<br/>
+          До: <b>${fmtHours(row.remaining_before)}</b> → После: <b>${fmtHours(row.remaining_after)}</b>
+        </div>
+      `;
+      logBox.appendChild(el);
+    }
+  } catch (e){
+    console.error("fire_log fetch failed:", e);
+    // молча пропускаем, чтобы кнопки и огонь продолжали работать
+  }
+}
 
     function startTicker(){
       if(state.tickTimer) clearInterval(state.tickTimer);
