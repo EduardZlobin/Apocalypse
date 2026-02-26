@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Apocalypse — Daily Flame</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <style>
     :root{
       --bg0:#070812;
       --bg1:#0b0f1f;
       --card:rgba(255,255,255,.06);
-      --card2:rgba(255,255,255,.09);
       --txt:rgba(255,255,255,.92);
       --mut:rgba(255,255,255,.62);
       --bad:#ff5a6b;
@@ -23,7 +24,6 @@
       --btn: rgba(255,255,255,.08);
       --btnh: rgba(255,255,255,.12);
     }
-
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -37,8 +37,7 @@
       min-height:100vh;
       overflow-x:hidden;
     }
-
-    .wrap{max-width:1080px; margin:0 auto; padding:18px 18px 60px;}
+    .wrap{max-width:1100px; margin:0 auto; padding:18px 18px 64px;}
     .top{
       display:flex; align-items:center; justify-content:space-between;
       gap:12px; padding:10px 12px;
@@ -47,6 +46,9 @@
       border-radius:var(--radius);
       backdrop-filter: var(--glass);
       box-shadow: var(--shadow);
+      position:sticky;
+      top:12px;
+      z-index:10;
     }
     .brand{display:flex; align-items:center; gap:10px;}
     .dot{
@@ -56,7 +58,6 @@
     }
     .title{font-weight:800; letter-spacing:.4px}
     .subtitle{color:var(--mut); font-size:12px; margin-top:2px}
-
     .btn{
       border:1px solid var(--ring);
       background:var(--btn);
@@ -70,16 +71,13 @@
     .btn:hover{background:var(--btnh); transform: translateY(-1px)}
     .btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
     .btnRow{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:center}
-
     .grid{
       margin-top:18px;
       display:grid;
       grid-template-columns: 1.15fr .85fr;
       gap:18px;
     }
-    @media (max-width: 980px){
-      .grid{grid-template-columns:1fr}
-    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
 
     .panel{
       background:var(--card);
@@ -91,8 +89,11 @@
       position:relative;
       overflow:hidden;
     }
+    .sectionTitle{font-weight:900; font-size:16px;}
+    .small{font-size:12px; color:var(--mut)}
+    .line{height:1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent); margin:12px 0;}
 
-    /* FIRE CORE */
+    /* Core */
     .coreWrap{
       display:flex;
       flex-direction:column;
@@ -102,13 +103,11 @@
       gap:14px;
       position:relative;
     }
-
     .ring{
       position:absolute;
       width:520px; height:520px;
       border-radius:50%;
       border:1px solid var(--ring);
-      filter: blur(.2px);
       opacity:.55;
       animation: spin 18s linear infinite;
     }
@@ -140,22 +139,10 @@
     .fireBtn:active{transform: translateY(0px) scale(.99)}
     .fireBtn:disabled{opacity:.55; cursor:not-allowed; transform:none}
 
-    .emoji{
-      font-size:78px;
-      filter: drop-shadow(0 10px 24px rgba(0,0,0,.55));
-      transform: translateY(-6px);
-      animation: flicker 2.8s ease-in-out infinite;
-    }
-    @keyframes flicker{
-      0%,100%{transform: translateY(-6px) scale(1)}
-      50%{transform: translateY(-10px) scale(1.02)}
-    }
+    .emoji{font-size:78px; filter: drop-shadow(0 10px 24px rgba(0,0,0,.55)); transform: translateY(-6px); animation: flicker 2.8s ease-in-out infinite;}
+    @keyframes flicker{ 0%,100%{transform: translateY(-6px) scale(1)} 50%{transform: translateY(-10px) scale(1.02)} }
 
-    .inv{
-      display:flex; gap:12px; align-items:center; justify-content:center;
-      margin-top:4px;
-    }
-
+    .inv{display:flex; gap:12px; align-items:center; justify-content:center; margin-top:4px;}
     .invBtn{
       width:74px; height:74px;
       border-radius:50%;
@@ -171,7 +158,6 @@
     .invBtn:hover{transform: translateY(-2px)}
     .invBtn:active{transform: translateY(0px)}
     .invBtn:disabled{opacity:.45; cursor:not-allowed; transform:none}
-
     .badge{
       position:absolute;
       bottom:-6px; right:-6px;
@@ -185,52 +171,9 @@
       color:var(--txt);
       backdrop-filter: var(--glass);
     }
-
-    .meta{
-      display:flex; gap:10px; flex-wrap:wrap;
-      justify-content:center;
-      color:var(--mut);
-      font-size:13px;
-      margin-top:8px;
-      text-align:center;
-    }
-
-    .line{
-      height:1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
-      margin:12px 0;
-    }
-
-    .small{font-size:12px; color:var(--mut)}
-    .kpi{display:flex; gap:10px; flex-wrap:wrap}
-    .chip{
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--ring);
-      background: rgba(255,255,255,.05);
-      backdrop-filter: var(--glass);
-      font-size:12px;
-      color:var(--mut);
-    }
-
-    .log{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      max-height:520px;
-      overflow:auto;
-      padding-right:6px;
-    }
-    .logItem{
-      border:1px solid var(--ring);
-      background:rgba(255,255,255,.04);
-      border-radius:14px;
-      padding:10px 12px;
-    }
-    .logTop{display:flex; justify-content:space-between; gap:10px; align-items:center}
-    .logType{font-weight:700}
-    .logTime{font-size:12px; color:var(--mut)}
-    .logBody{margin-top:6px; color:var(--mut); font-size:13px}
+    .meta{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; color:var(--mut); font-size:13px; margin-top:8px; text-align:center;}
+    .kpi{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+    .chip{padding:8px 10px; border-radius:999px; border:1px solid var(--ring); background: rgba(255,255,255,.05); font-size:12px; color:var(--mut);}
 
     .status{
       margin-top:10px;
@@ -244,11 +187,76 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
+      width:min(720px, 100%);
     }
     .status b{color:var(--txt)}
     .pillOk{color:var(--ok)}
     .pillBad{color:var(--bad)}
-    code{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+
+    /* Logs */
+    .log{display:flex; flex-direction:column; gap:10px; max-height:520px; overflow:auto; padding-right:6px;}
+    .logItem{border:1px solid var(--ring); background:rgba(255,255,255,.04); border-radius:14px; padding:10px 12px;}
+    .logTop{display:flex; justify-content:space-between; gap:10px; align-items:center}
+    .logType{font-weight:800}
+    .logTime{font-size:12px; color:var(--mut)}
+    .logBody{margin-top:6px; color:var(--mut); font-size:13px; line-height:1.35}
+
+    /* Lore */
+    .lore{
+      max-width: 860px;
+      margin: 10px auto 0;
+      border:1px solid var(--ring);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.03);
+      color: var(--mut);
+      line-height: 1.5;
+    }
+    .lore b{color:var(--txt)}
+
+    /* Catastrophe overlay */
+    .overlay{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(8px);
+      z-index:999;
+    }
+    .overlay.show{display:flex;}
+    .overlayCard{
+      max-width: 980px;
+      width: 100%;
+      background: rgba(20,10,14,.72);
+      border: 1px solid rgba(255,90,107,.35);
+      border-radius: 22px;
+      padding: 18px 18px 14px;
+      box-shadow: 0 30px 120px rgba(0,0,0,.7);
+      position:relative;
+      overflow:hidden;
+    }
+    .overlayTitle{
+      font-weight: 950;
+      font-size: 18px;
+      color: var(--bad);
+      letter-spacing: .2px;
+      margin-bottom: 10px;
+    }
+    .overlayText{color: rgba(255,255,255,.88); line-height:1.55}
+    .overlayHint{color: rgba(255,255,255,.65); font-size:12px; margin-top: 10px}
+    .closeX{
+      position:absolute; top:12px; right:12px;
+      width:40px; height:40px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.9);
+      cursor:pointer;
+    }
+    footer{margin-top:18px; text-align:center; color:var(--mut); font-size:12px}
+    canvas{max-width:100%; background: rgba(255,255,255,.02); border:1px solid var(--ring); border-radius: 14px;}
   </style>
 </head>
 
@@ -262,7 +270,6 @@
           <div class="subtitle">Огонь общий. Мир держится на вашей забывчивости.</div>
         </div>
       </div>
-
       <div class="btnRow">
         <button class="btn" id="btnLogin">Войти через Discord</button>
         <button class="btn" id="btnLogout" style="display:none;">Выйти</button>
@@ -270,6 +277,7 @@
     </div>
 
     <div class="grid">
+      <!-- LEFT: CORE + LORE + GRAPH -->
       <div class="panel">
         <div class="coreWrap">
           <div class="ring"></div>
@@ -310,43 +318,72 @@
             <div class="chip" id="chipUser">Пользователь: —</div>
             <div class="chip" id="chipCooldown">Кулдаун: —</div>
             <div class="chip" id="chipStreak">Стрик: —</div>
+            <div class="chip" id="chipEpoch">Эпоха: —</div>
+            <div class="chip" id="chipNextEvent">Событие: —</div>
           </div>
 
-          <div class="small" style="margin-top:10px; text-align:center">
-            Подсказка: если огонь потухнет — будет <b style="color:var(--bad)">CATASTROPHE</b>. И это не метафора, это канон.
+          <div class="lore" id="loreBlock">
+            <b>Злобин предупреждает:</b> этот огонь — единственное, что его сдерживает. Он может зайти в любой момент,
+            чтобы разогреть свой котелок горохового супа. Если огонь погаснет, Злобин сильно разозлится и пустит всю энергию
+            супа на ядерный синтез. А это уже приведет к настоящей катастрофе. Так что лучше не давай пламени погаснуть,
+            если не хочешь проблем.
+          </div>
+
+          <div class="line"></div>
+
+          <div style="width:100%">
+            <div class="sectionTitle">График угрозы</div>
+            <div class="small">Чем ниже линия — тем ближе мир был к катастрофе.</div>
+            <div class="line"></div>
+            <canvas id="chart" height="160"></canvas>
           </div>
         </div>
       </div>
 
+      <!-- RIGHT: LOGS -->
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:10px;">
           <div>
-            <div style="font-weight:800; font-size:16px;">История / Логи</div>
-            <div class="small">Пока без графика — лог уже готовит “пики и ямы”.</div>
+            <div class="sectionTitle">История / Логи</div>
+            <div class="small">Пики и ямы — теперь официально.</div>
           </div>
           <button class="btn" id="btnRefresh">Обновить</button>
         </div>
 
         <div class="line"></div>
-
         <div class="log" id="logBox"></div>
       </div>
+    </div>
+
+    <footer>
+      Если вы читаете это — значит сирена пока молчит. Пользуйтесь.
+    </footer>
+  </div>
+
+  <!-- Catastrophe overlay -->
+  <div class="overlay" id="overlay">
+    <div class="overlayCard">
+      <button class="closeX" id="btnCloseOverlay">✕</button>
+      <div class="overlayTitle">CATASTROPHE</div>
+      <div class="overlayText" id="catText">
+        Злобин пришел, а огонь погас. Теперь он в ярости и перенаправил всю энергию из горохового супа в ядерный синтез.
+        Ты допустил катастрофу, и теперь пути назад нет — суп холодный, а мир на грани взрыва.
+        Пока ты это читаешь, остатки человечества в спешке спускаются в бункеры.
+        Надеюсь, ты доволен собой, ведь теперь нам всем придется жить под землей из-за одного остывшего котелка.
+      </div>
+      <div class="overlayHint">Сирена отключается, когда огонь снова жив (или если закрыть окно — но совесть не закроешь).</div>
     </div>
   </div>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-    // =========================
-    // CONFIG
-    // =========================
     const SUPABASE_URL = "https://vskoiojbedimfdatepqy.supabase.co";
     const SUPABASE_KEY = "sb_publishable_VcqtTyBpAwlpJuwh_Wc0tw_IPxVIsgP";
     const SITE_URL = "https://eduardzlobin.github.io/Apocalypse";
-
     const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // UI refs
+    // UI
     const btnLogin = document.getElementById("btnLogin");
     const btnLogout = document.getElementById("btnLogout");
     const btnFire = document.getElementById("btnFire");
@@ -366,20 +403,19 @@
     const chipUser = document.getElementById("chipUser");
     const chipCooldown = document.getElementById("chipCooldown");
     const chipStreak = document.getElementById("chipStreak");
+    const chipEpoch = document.getElementById("chipEpoch");
+    const chipNextEvent = document.getElementById("chipNextEvent");
+
     const logBox = document.getElementById("logBox");
 
-    let state = {
-      session: null,
-      fire: null,
-      profile: null,
-      tickTimer: null
-    };
+    const overlay = document.getElementById("overlay");
+    const btnCloseOverlay = document.getElementById("btnCloseOverlay");
 
-    function fmtDT(x){
-      if(!x) return "—";
-      const d = new Date(x);
-      return d.toLocaleString();
-    }
+    let state = { session:null, fire:null, profile:null, logs:[], tickTimer:null };
+    let chart = null;
+
+    // ===== Utils
+    const fmtDT = (x)=> x ? new Date(x).toLocaleString() : "—";
 
     function fmtHours(h){
       if(h === null || h === undefined || isNaN(h)) return "—";
@@ -402,12 +438,6 @@
       if(kind==="bad") statusText.classList.add("pillBad");
     }
 
-   function lockActions(locked){
-  btnFire.disabled = locked; // 🔥 можно всегда, если не locked
-  btnCoal.disabled = locked || !(state.profile && state.profile.coal > 0);
-  btnFuel.disabled = locked || !(state.profile && state.profile.fuel > 0);
-}
-
     function effectiveRemainingHours(){
       if(!state.fire) return null;
       const now = Date.now();
@@ -419,6 +449,60 @@
         if(m > 0) remH = remH / m;
       }
       return remH;
+    }
+
+    // ===== Siren (WebAudio, без файлов)
+    let audioCtx = null, sirenOsc = null, sirenGain = null, sirenTimer = null;
+    function sirenStart(){
+      if(sirenOsc) return;
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      sirenOsc = audioCtx.createOscillator();
+      sirenGain = audioCtx.createGain();
+      sirenOsc.type = "sawtooth";
+      sirenGain.gain.value = 0.0001;
+      sirenOsc.connect(sirenGain);
+      sirenGain.connect(audioCtx.destination);
+      sirenOsc.start();
+
+      let up = true;
+      sirenTimer = setInterval(()=>{
+        if(!sirenOsc) return;
+        const t = audioCtx.currentTime;
+        const f = up ? 880 : 520;
+        up = !up;
+        sirenOsc.frequency.setTargetAtTime(f, t, 0.05);
+        sirenGain.gain.setTargetAtTime(0.12, t, 0.02);
+      }, 380);
+    }
+    function sirenStop(){
+      if(sirenTimer){ clearInterval(sirenTimer); sirenTimer=null; }
+      if(sirenOsc){
+        try{
+          const t = audioCtx.currentTime;
+          sirenGain.gain.setTargetAtTime(0.0001, t, 0.03);
+          setTimeout(()=>{ try{ sirenOsc.stop(); }catch{} sirenOsc=null; sirenGain=null; }, 140);
+        } catch {
+          sirenOsc=null; sirenGain=null;
+        }
+      }
+    }
+
+    function overlayShow(){
+      overlay.classList.add("show");
+      sirenStart();
+    }
+    function overlayHide(){
+      overlay.classList.remove("show");
+      // сирену не глушим принудительно: она сама остановится, когда огонь оживёт
+    }
+    btnCloseOverlay.addEventListener("click", overlayHide);
+    overlay.addEventListener("click", (e)=>{ if(e.target === overlay) overlayHide(); });
+
+    // ===== Render
+    function lockActions(locked){
+      btnFire.disabled = locked; // 🔥 доступен всем залогиненным
+      btnCoal.disabled = locked || !(state.profile && (state.profile.coal ?? 0) > 0);
+      btnFuel.disabled = locked || !(state.profile && (state.profile.fuel ?? 0) > 0);
     }
 
     function render(){
@@ -434,7 +518,6 @@
           state.profile.username ||
           state.session?.user?.user_metadata?.full_name ||
           state.session?.user?.user_metadata?.name ||
-          state.session?.user?.email ||
           "Discord User";
 
         chipUser.textContent = `Пользователь: ${name}`;
@@ -461,101 +544,147 @@
         burnText.textContent = effectActive ? `x${state.fire.burn_multiplier}` : "x1.0";
         untilText.textContent = effectActive ? fmtDT(state.fire.multiplier_until) : "—";
 
+        chipEpoch.textContent = `Эпоха: ${state.fire.epoch ?? "—"}`;
+        chipNextEvent.textContent = `Событие: ${state.fire.next_event_at ? fmtDT(state.fire.next_event_at) : "—"}`;
+
         if(rem !== null){
-          if(rem <= 0) setStatus("Огонь потух. Мир уже считает актёров катаклизма…", "bad");
-          else if(rem < 6) setStatus("КРИТИЧНО: осталось мало. Кто-то должен помнить кнопку.", "bad");
-          else setStatus("Огонь жив. Пока.", "ok");
+          if(rem <= 0){
+            setStatus("Огонь потух. Это не баг — это сюжет.", "bad");
+            overlayShow();
+          }else if(rem < 6){
+            setStatus("КРИТИЧНО: осталось мало. Кто-то должен помнить кнопку.", "bad");
+            if(overlay.classList.contains("show")) overlayHide();
+            sirenStop();
+          }else{
+            setStatus("Огонь жив. Пока.", "ok");
+            if(overlay.classList.contains("show")) overlayHide();
+            sirenStop();
+          }
         }
       } else {
         remainText.textContent = "—";
         burnText.textContent = "—";
         untilText.textContent = "—";
+        chipEpoch.textContent = "Эпоха: —";
+        chipNextEvent.textContent = "Событие: —";
       }
 
       lockActions(!loggedIn);
       whoText.textContent = loggedIn ? "Ваша ответственность: включена" : "Войдите, чтобы подкинуть дрова";
     }
 
+    // ===== Data loaders
+    async function ensureProfile(){
+      if(!state.session) return;
+      await sb.rpc("ensure_profile");
+    }
+
     async function loadFire(){
       const { data, error } = await sb
         .from("fire")
-        .select("expires_at, burn_multiplier, multiplier_until")
+        .select("expires_at, burn_multiplier, multiplier_until, epoch, next_event_at")
         .eq("id", 1)
         .single();
-
-      if(error){
-        console.error(error);
-        setStatus("Не могу прочитать fire (проверь RLS/policies).", "bad");
-        return;
-      }
+      if(error){ console.error(error); setStatus("Не могу прочитать fire (RLS?).", "bad"); return; }
       state.fire = data;
     }
 
     async function loadProfile(){
-  if(!state.session) { state.profile = null; return; }
-  const uid = state.session.user.id;
-
-  const { data, error } = await sb
-    .from("profiles")
-    .select("user_id, username, coal, fuel, streak, last_feed_at, last_streak_day")
-    .eq("user_id", uid)
-    .maybeSingle(); // ✅ вместо single()
-
-  if(error){
-    console.error(error);
-    setStatus("Не могу прочитать profiles (проверь RLS).", "bad");
-    return;
-  }
-
-  state.profile = data; // будет null, если строка не существует
-}
-
-async function loadLogs(){
-  try{
-    const { data, error } = await sb
-      .from("fire_log")
-      .select("type, at, delta_hours, remaining_before, remaining_after, user_id")
-      .order("at", { ascending: false })
-      .limit(30);
-
-    if(error){
-      console.error("fire_log error:", error);
-      // не убиваем сайт из-за логов — просто оставим старое/пустое
-      return;
+      if(!state.session){ state.profile=null; return; }
+      const uid = state.session.user.id;
+      const { data, error } = await sb
+        .from("profiles")
+        .select("user_id, username, coal, fuel, streak, last_feed_at, last_streak_day, last_reward_day")
+        .eq("user_id", uid)
+        .maybeSingle();
+      if(error){ console.error(error); setStatus("Не могу прочитать profiles (RLS?).", "bad"); return; }
+      state.profile = data;
     }
 
-    logBox.innerHTML = "";
-    for(const row of data){
-      const el = document.createElement("div");
-      el.className = "logItem";
+    async function loadLogs(){
+      try{
+        const { data, error } = await sb
+          .from("fire_log")
+          .select("type, at, delta_hours, remaining_before, remaining_after, user_id, details")
+          .order("at", { ascending: false })
+          .limit(60);
 
-      const t = row.type || "—";
-      const time = row.at ? new Date(row.at).toLocaleString() : "—";
-      const dh = row.delta_hours ?? 0;
+        if(error){ console.error("fire_log error:", error); return; }
 
-      let line = "";
-      if(t === "FEED") line = dh > 0 ? `Подкинули: +${dh}ч` : "Подкинули";
-      else if(t === "EVENT") line = dh !== 0 ? `Событие: ${dh>0?"+":""}${dh}ч` : "Событие (модификатор/эффект)";
-      else if(t === "CATASTROPHE") line = "Катаклизм: огонь потух";
-      else line = "Запись";
+        state.logs = data || [];
+        logBox.innerHTML = "";
+        for(const row of state.logs){
+          const el = document.createElement("div");
+          el.className = "logItem";
 
-      el.innerHTML = `
-        <div class="logTop">
-          <div class="logType">${t}</div>
-          <div class="logTime">${time}</div>
-        </div>
-        <div class="logBody">
-          ${line}<br/>
-          До: <b>${fmtHours(row.remaining_before)}</b> → После: <b>${fmtHours(row.remaining_after)}</b>
-        </div>
-      `;
-      logBox.appendChild(el);
+          const t = row.type || "—";
+          const time = row.at ? new Date(row.at).toLocaleString() : "—";
+          const dh = row.delta_hours ?? 0;
+
+          let line = "";
+          if(t === "FEED") line = dh > 0 ? `Подкинули: +${dh}ч` : "Подкинули";
+          else if(t === "EVENT") line = dh !== 0 ? `Событие: ${dh>0?"+":""}${dh}ч` : "Событие";
+          else if(t === "CATASTROPHE") line = "Катаклизм: огонь потух";
+          else line = "Запись";
+
+          const det = row.details ? `<div style="margin-top:6px;color:rgba(255,255,255,.80)">${row.details}</div>` : "";
+
+          el.innerHTML = `
+            <div class="logTop">
+              <div class="logType">${t}</div>
+              <div class="logTime">${time}</div>
+            </div>
+            <div class="logBody">
+              ${line}<br/>
+              ${row.remaining_before == null ? "" : `До: <b>${fmtHours(row.remaining_before)}</b> → `}
+              ${row.remaining_after == null ? "" : `После: <b>${fmtHours(row.remaining_after)}</b>`}
+              ${det}
+            </div>
+          `;
+          logBox.appendChild(el);
+        }
+      } catch(e){
+        console.error("fire_log fetch failed:", e);
+      }
     }
-  } catch (e){
-    console.error("fire_log fetch failed:", e);
-    // молча пропускаем, чтобы кнопки и огонь продолжали работать
-  }
-}
+
+    function buildChart(){
+      const ctx = document.getElementById("chart");
+      if(!ctx) return;
+
+      // точки — по remaining_after; пропускаем null
+      const pts = (state.logs || [])
+        .slice()
+        .reverse()
+        .filter(x => x.remaining_after != null && x.at != null)
+        .map(x => ({ x: new Date(x.at), y: Number(x.remaining_after) }));
+
+      const data = {
+        datasets: [{
+          label: "Оставалось (часы)",
+          data: pts,
+          tension: 0.25,
+          pointRadius: 0,
+          borderWidth: 2
+        }]
+      };
+
+      const options = {
+        responsive: true,
+        parsing: false,
+        scales: {
+          x: { type: "time", time: { tooltipFormat: "dd.MM.yyyy HH:mm" } },
+          y: { beginAtZero: true }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: true }
+        }
+      };
+
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, { type: "line", data, options });
+    }
 
     function startTicker(){
       if(state.tickTimer) clearInterval(state.tickTimer);
@@ -566,23 +695,49 @@ async function loadLogs(){
       await loadFire();
       await loadProfile();
       await loadLogs();
+      buildChart();
       render();
       startTicker();
     }
 
-    // =========================
-    // AUTH
-    // =========================
+    // ===== Actions
+    async function callFeed(use_item){
+      try{
+        lockActions(true);
+        setStatus("Запрос к ядру…", "info");
+        const { data, error } = await sb.rpc("feed_fire", { use_item });
+
+        if(error){
+          console.error(error);
+          const msg = (error.message || "").toString();
+          if(msg.includes("COOLDOWN")) setStatus("Кулдаун: ещё рано.", "bad");
+          else if(msg.includes("NO_COAL")) setStatus("Нет угля.", "bad");
+          else if(msg.includes("NO_FUEL")) setStatus("Нет топлива.", "bad");
+          else if(msg.includes("NOT_AUTHENTICATED")) setStatus("Нужно войти.", "bad");
+          else setStatus("RPC ошибка: " + msg, "bad");
+          return;
+        }
+
+        if(data?.fire) state.fire = data.fire;
+        if(data?.profile) state.profile = data.profile;
+
+        // после действия перечитаем всё, чтобы график/логи точно обновились
+        await refreshAll();
+        setStatus("Готово. Мир отложен на потом.", "ok");
+      } finally {
+        lockActions(false);
+        render();
+      }
+    }
+
+    // ===== Auth
     btnLogin.addEventListener("click", async () => {
       setStatus("Открываю Discord…", "info");
       const { error } = await sb.auth.signInWithOAuth({
         provider: "discord",
         options: { redirectTo: SITE_URL }
       });
-      if(error){
-        console.error(error);
-        setStatus("Ошибка логина Discord. Проверь Redirect URLs.", "bad");
-      }
+      if(error){ console.error(error); setStatus("Ошибка Discord login.", "bad"); }
     });
 
     btnLogout.addEventListener("click", async () => {
@@ -592,86 +747,27 @@ async function loadLogs(){
       render();
     });
 
-    // =========================
-    // ACTIONS (RPC)
-    // =========================
-    async function callFeed(use_item) {
-  console.log("RPC feed_fire ->", use_item);
-  try {
-    lockActions(true);
-    setStatus("Запрос к ядру…", "info");
-
-    const res = await sb.rpc("feed_fire", { use_item });
-    console.log("RPC result:", res);
-
-    const { data, error } = res;
-
-    if (error) {
-      console.error("RPC error:", error);
-      const msg = (error.message || "").toString();
-
-      if (msg.includes("COOLDOWN")) {
-        setStatus("Кулдаун: ещё рано. (Смотри чип 'Кулдаун')", "bad");
-      } else if (msg.includes("NO_COAL")) {
-        setStatus("Нет угля в инвентаре.", "bad");
-      } else if (msg.includes("NO_FUEL")) {
-        setStatus("Нет топлива в инвентаре.", "bad");
-      } else if (msg.includes("NOT_AUTHENTICATED")) {
-        setStatus("Нужно войти.", "bad");
-      } else {
-        setStatus("RPC ошибка: " + msg, "bad");
-      }
-      return;
-    }
-
-    console.log("RPC data:", data);
-
-    if (data?.fire) state.fire = data.fire;
-    if (data?.profile) state.profile = data.profile;
-
-    setStatus("Готово. Мир отложен на потом.", "ok");
-    await loadLogs();
-await loadFire();
-await loadProfile();
-  } catch (e) {
-    console.error("callFeed crash:", e);
-    setStatus("Ошибка JS: " + (e?.message || e), "bad");
-  } finally {
-    lockActions(false);
-    render();
-  }
-}
-
-    btnFire.addEventListener("click", ()=> {
-  console.log("🔥 click");
-  callFeed("wood");
-});
+    btnFire.addEventListener("click", ()=> callFeed("wood"));
     btnCoal.addEventListener("click", ()=> callFeed("coal"));
     btnFuel.addEventListener("click", ()=> callFeed("fuel"));
     btnRefresh.addEventListener("click", refreshAll);
 
-    // init
-    async function ensureProfile(){
-  if(!state.session) return;
-  const { error } = await sb.rpc("ensure_profile");
-  if(error) console.error("ensure_profile error:", error);
-}
+    // ===== init
+    (async function init(){
+      const { data } = await sb.auth.getSession();
+      state.session = data.session || null;
 
-(async function init(){
-  const { data } = await sb.auth.getSession();
-  state.session = data.session || null;
+      if(state.session) await ensureProfile();
 
-  if(state.session) await ensureProfile();  // ✅ добавили
+      sb.auth.onAuthStateChange(async (_event, session) => {
+        state.session = session;
+        if(state.session) await ensureProfile();
+        await refreshAll();
+      });
 
-  sb.auth.onAuthStateChange(async (_event, session) => {
-    state.session = session;
-    if(state.session) await ensureProfile(); // ✅ добавили
-    await refreshAll();
-  });
-
-  await refreshAll();
-  setStatus("Готов. Это не сайт — это система жизнеобеспечения.", "ok");
-})();
+      await refreshAll();
+      setStatus("Готов. Это не сайт — это система жизнеобеспечения.", "ok");
+    })();
   </script>
 </body>
 </html>
