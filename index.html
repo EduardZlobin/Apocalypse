@@ -411,8 +411,8 @@
 }
   
 .fireIcon{
-  width: 92px;
-  height: 92px;
+  width: 130px;
+  height: 130px;
   object-fit: contain;
   transform: translateY(-6px);
   filter: drop-shadow(0 10px 24px rgba(0,0,0,.55));
@@ -788,13 +788,41 @@
         updateFireEmoji(rem);
         remainText.textContent = fmtHours(rem);
         // обновляем иконку огня
-const nextSrc = pickFireIcon(rem);
-if(fireIcon && fireIcon.getAttribute("src") !== nextSrc){
-  fireIcon.style.opacity = "0.35";
-  setTimeout(()=>{
-    fireIcon.src = nextSrc;
-    fireIcon.style.opacity = "1";
-  }, 80);
+        const nextSrc = pickFireIcon(rem);
+        if(fireIcon && fireIcon.getAttribute("src") !== nextSrc){
+        fireIcon.style.opacity = "0.35";
+        setTimeout(()=>{
+          fireIcon.src = nextSrc;
+          fireIcon.style.opacity = "1";
+        }, 80);
+      }
+
+// fire
+if(state.fire){
+  const rem = effectiveRemainingHours();
+
+  remainText.textContent = fmtHours(rem);
+
+  // --- иконка
+  const nextSrc = pickFireIcon(rem);
+  if(fireIcon && fireIcon.getAttribute("src") !== nextSrc){
+    fireIcon.style.opacity = "0.35";
+    setTimeout(()=>{
+      fireIcon.src = nextSrc;
+      fireIcon.style.opacity = "1";
+    }, 80);
+  }
+
+  // --- тревожный glow
+  if(fireIcon){
+    if(rem !== null && rem < 6 && rem > 0){
+      fireIcon.style.filter =
+        "drop-shadow(0 0 18px rgba(255,90,107,.35)) drop-shadow(0 10px 24px rgba(0,0,0,.55))";
+    }else{
+      fireIcon.style.filter = "drop-shadow(0 10px 24px rgba(0,0,0,.55))";
+    }
+  }
+
 }
 
         const effectActive = state.fire.multiplier_until && new Date(state.fire.multiplier_until).getTime() > Date.now();
