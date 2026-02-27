@@ -870,6 +870,7 @@ function renderEvent(){
     btnCoal.addEventListener("click", ()=> callFeed("coal"));
     btnFuel.addEventListener("click", ()=> callFeed("fuel"));
     btnRefresh.addEventListener("click", refreshAll);
+    btnAdmin.addEventListener("click", () => { alert("Админ-панель активна"); });
 
 btnRapid.addEventListener("click", async () => {
   if(!state.session) return;
@@ -911,7 +912,51 @@ renderEvent();
       await refreshAll();
       setStatus("Готов. Это не сайт — это система жизнеобеспечения.", "ok");
     })();
+const adminModal = document.getElementById("adminModal");
+const btnCloseAdmin = document.getElementById("btnCloseAdmin");
+const btnCreateEvent = document.getElementById("btnCreateEvent");
 
+btnAdmin.addEventListener("click", () => {
+  adminModal.style.display = "flex";
+});
+
+btnCloseAdmin.addEventListener("click", () => {
+  adminModal.style.display = "none";
+});
   </script>
+  <div id="adminModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  backdrop-filter:blur(8px);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+">
+  <div style="
+    width:600px;
+    background:#111827;
+    padding:20px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.15);
+  ">
+    <h2>Админ панель</h2>
+
+    <input id="evTitle" placeholder="Название" style="width:100%; margin-bottom:8px;">
+    <textarea id="evDesc" placeholder="Описание" style="width:100%; margin-bottom:8px;"></textarea>
+    <textarea id="evEndText" placeholder="Текст после окончания" style="width:100%; margin-bottom:8px;"></textarea>
+
+    <select id="evType" style="width:100%; margin-bottom:8px;">
+      <option value="rapid_click">Rapid Click</option>
+    </select>
+
+    <input id="evStart" type="datetime-local" style="width:100%; margin-bottom:8px;">
+    <input id="evEnd" type="datetime-local" style="width:100%; margin-bottom:8px;">
+
+    <button id="btnCreateEvent">Запустить</button>
+    <button id="btnCloseAdmin">Закрыть</button>
+  </div>
+</div>
 </body>
 </html>
