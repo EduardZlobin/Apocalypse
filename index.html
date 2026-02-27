@@ -438,6 +438,8 @@
           <div class="ring"></div>
           <div class="ring2"></div>
 
+          <div class="small" id="epochAgeText" style="text-align:center; width:100%;"></div>
+
           <button class="fireBtn" id="btnFire" disabled title="Подкинуть дрова (+24ч, кулдаун 20ч)">
             <div class="emoji" id="fireEmoji">🔥</div>
           </button>
@@ -616,7 +618,8 @@
     const chipStreak = document.getElementById("chipStreak");
     const chipEpoch = document.getElementById("chipEpoch");
     const chipNextEvent = document.getElementById("chipNextEvent");
-
+    const epochAgeText = document.getElementById("epochAgeText");
+    
     const logBox = document.getElementById("logBox");
 
     const overlay = document.getElementById("overlay");
@@ -772,6 +775,17 @@
 
         chipEpoch.textContent = `Эпоха: ${state.fire.epoch ?? "—"}`;
         chipNextEvent.textContent = `Событие: ${state.fire.next_event_at ? fmtDT(state.fire.next_event_at) : "—"}`;
+        if(state.fire.epoch_started_at){
+        const start = new Date(state.fire.epoch_started_at).getTime();
+        const diff = Date.now() - start;
+
+        const days = Math.floor(diff / (24*3600*1000));
+        const hours = Math.floor((diff % (24*3600*1000)) / (3600*1000));
+
+        epochAgeText.textContent = `Эпоха горит уже: ${days}д ${hours}ч`;
+      }else{
+      epochAgeText.textContent = "Эпоха горит уже: —";
+      }
 
         if(rem !== null){
           if(rem <= 0){
@@ -826,7 +840,7 @@ function updateFireEmoji(remH){
     async function loadFire(){
       const { data, error } = await sb
         .from("fire")
-        .select("expires_at, burn_multiplier, multiplier_until, epoch, next_event_at")
+        .select("expires_at, burn_multiplier, multiplier_until, epoch, next_event_at, epoch_started_at")
         .eq("id", 1)
         .single();
       if(error){ console.error(error); setStatus("Не могу прочитать fire (RLS?).", "bad"); return; }
