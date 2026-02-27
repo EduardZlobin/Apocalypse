@@ -257,6 +257,17 @@
     }
     footer{margin-top:18px; text-align:center; color:var(--mut); font-size:12px}
     canvas{max-width:100%; background: rgba(255,255,255,.02); border:1px solid var(--ring); border-radius: 14px;}
+  
+  .eventGlow{
+  box-shadow:
+    0 0 18px rgba(255,255,255,.55),
+    0 0 60px rgba(255,255,255,.35),
+    0 0 120px rgba(255,255,255,.18),
+    0 10px 70px rgba(0,0,0,.55);
+  border-color: rgba(255,255,255,.55) !important;
+}
+  
+  
   </style>
 </head>
 
@@ -286,6 +297,19 @@
           <button class="fireBtn" id="btnFire" disabled title="Подкинуть дрова (+24ч, кулдаун 20ч)">
             <div class="emoji" id="fireEmoji">🔥</div>
           </button>
+
+          <!-- Event bar -->
+<div id="eventBar" style="display:none; width:min(720px,100%); margin-top:8px;">
+  <div id="eventTitle" style="text-align:center; font-weight:900; margin-bottom:6px;"></div>
+  <div style="height:10px; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12); border-radius:999px; overflow:hidden;">
+    <div id="eventProgress" style="height:10px; width:0%; background:rgba(255,255,255,.92); border-radius:999px;"></div>
+  </div>
+</div>
+
+<!-- Rapid click button (появляется только во время ивента) -->
+<button class="fireBtn" id="btnRapid" style="display:none;" title="Ивент: +10 секунд за клик (кд 0.15с)">
+  <div class="emoji">⚡</div>
+</button>
 
           <div class="inv">
             <button class="invBtn" id="btnCoal" disabled title="Уголь: +30ч (без кулдауна)">
@@ -410,6 +434,14 @@
 
     const overlay = document.getElementById("overlay");
     const btnCloseOverlay = document.getElementById("btnCloseOverlay");
+
+    const btnRapid = document.getElementById("btnRapid");
+    const eventBar = document.getElementById("eventBar");
+    const eventTitle = document.getElementById("eventTitle");
+    const eventProgress = document.getElementById("eventProgress");
+
+    let activeEvent = null;
+    let rapidLock = false;
 
     let state = { session:null, fire:null, profile:null, logs:[], tickTimer:null };
     let chart = null;
@@ -620,6 +652,58 @@ function updateFireEmoji(remH){
       state.profile = data;
     }
 
+    async function loadActiveEvent(){
+  const { data, error } = await sb
+    .from("admin_events")
+    .select("id,title,description,end_text,event_type,starts_at,ends_at,active")
+    .eq("active", true)
+    .order("starts_at", { ascending: false })
+    .limit(10);
+
+  if(error){
+    console.error("admin_events read error:", error);
+    activeEvent = null;
+    return;
+  }
+
+  const now = Date.now();
+  activeEvent = (data || []).find(ev => {
+    const s = new Date(ev.starts_at).getTime();
+    const e = new Date(ev.ends_at).getTime();
+    return s <= now && now <= e;
+  }) || null;
+}
+
+function renderEvent(){
+  // по умолчанию: обычный режим
+  btnRapid.style.display = "none";
+  eventBar.style.display = "none";
+  btnFire.style.display = "";
+
+  // убрать glow
+  btnRapid.classList.remove("eventGlow");
+  btnFire.classList.remove("eventGlow");
+
+  if(!activeEvent) return;
+
+  // показать бар
+  eventBar.style.display = "";
+  eventTitle.textContent = activeEvent.title || "Ивент";
+
+  const now = Date.now();
+  const start = new Date(activeEvent.starts_at).getTime();
+  const end = new Date(activeEvent.ends_at).getTime();
+  const pct = Math.max(0, Math.min(1, (now - start) / (end - start)));
+  eventProgress.style.width = (pct * 100).toFixed(2) + "%";
+
+  // пока делаем только rapid_click
+  if(activeEvent.event_type === "rapid_click"){
+    btnFire.style.display = "none";
+    btnRapid.style.display = "";
+    btnRapid.classList.add("eventGlow");
+  }
+}
+
     async function loadLogs(){
       try{
         const { data, error } = await sb
@@ -712,13 +796,16 @@ function updateFireEmoji(remH){
     }
 
     async function refreshAll(){
-      await loadFire();
-      await loadProfile();
-      await loadLogs();
-      buildChart();
-      render();
-      startTicker();
-    }
+  await loadFire();
+  await loadProfile();
+  await loadLogs();
+  await loadActiveEvent();
+
+  buildChart();
+  render();
+  renderEvent();
+  startTicker();
+}
 
     // ===== Actions
     async function callFeed(use_item){
@@ -772,6 +859,25 @@ function updateFireEmoji(remH){
     btnFuel.addEventListener("click", ()=> callFeed("fuel"));
     btnRefresh.addEventListener("click", refreshAll);
 
+btnRapid.addEventListener("click", async () => {
+  if(!state.session) return;
+  if(rapidLock) return;
+  if(!activeEvent || activeEvent.event_type !== "rapid_click") return;
+
+  rapidLock = true;
+  setTimeout(()=> rapidLock = false, 150); // 0.15 сек кд
+
+  const { error } = await sb.rpc("feed_rapid_click");
+  if(error){
+    console.error("feed_rapid_click error:", error);
+    return;
+  }
+
+  await loadFire();
+  render();
+  renderEvent();
+});
+    
     // ===== init
     (async function init(){
       const { data } = await sb.auth.getSession();
@@ -788,6 +894,7 @@ function updateFireEmoji(remH){
       await refreshAll();
       setStatus("Готов. Это не сайт — это система жизнеобеспечения.", "ok");
     })();
+
   </script>
 </body>
 </html>
