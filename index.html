@@ -410,6 +410,23 @@
   border:2px solid rgba(0,0,0,.25);
 }
   
+.fireIcon{
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+  transform: translateY(-6px);
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,.55));
+  transition: transform .18s ease, filter .18s ease, opacity .18s ease;
+  animation: iconFlicker 2.8s ease-in-out infinite;
+  user-select:none;
+  pointer-events:none;
+}
+
+@keyframes iconFlicker{
+  0%,100%{transform: translateY(-6px) scale(1)}
+  50%{transform: translateY(-10px) scale(1.02)}
+}
+
   </style>
 
 </head>
@@ -441,7 +458,7 @@
           <div class="small" id="epochAgeText" style="text-align:center; width:100%;"></div>
 
           <button class="fireBtn" id="btnFire" disabled title="Подкинуть дрова (+24ч, кулдаун 20ч)">
-            <div class="emoji" id="fireEmoji">🔥</div>
+            <img id="fireIcon" class="fireIcon" src="./assets/fire2.png" alt="fire">
           </button>
 
           <!-- Event bar -->
@@ -630,6 +647,8 @@
     const eventTitle = document.getElementById("eventTitle");
     const eventProgress = document.getElementById("eventProgress");
 
+    const fireIcon = document.getElementById("fireIcon");
+
     let activeEvent = null;
     let rapidLock = false;
 
@@ -768,6 +787,15 @@
         const rem = effectiveRemainingHours();
         updateFireEmoji(rem);
         remainText.textContent = fmtHours(rem);
+        // обновляем иконку огня
+const nextSrc = pickFireIcon(rem);
+if(fireIcon && fireIcon.getAttribute("src") !== nextSrc){
+  fireIcon.style.opacity = "0.35";
+  setTimeout(()=>{
+    fireIcon.src = nextSrc;
+    fireIcon.style.opacity = "1";
+  }, 80);
+}
 
         const effectActive = state.fire.multiplier_until && new Date(state.fire.multiplier_until).getTime() > Date.now();
         burnText.textContent = effectActive ? `x${state.fire.burn_multiplier}` : "x1.0";
@@ -813,21 +841,23 @@
       whoText.textContent = loggedIn ? "Ваша ответственность: включена" : "Войдите, чтобы подкинуть дрова";
     }
 
-function updateFireEmoji(remH){
-  const el = document.getElementById("fireEmoji");
-  if(!el || remH == null) return;
+function pickFireIcon(remH){
+  // remH = часы, может быть null
+  if(remH === null || remH === undefined || isNaN(remH)) return "./assets/fire2.png";
 
-  if(remH <= 0){
-    el.textContent = "💀";
-  }
-  else if(remH < 24){
-    el.textContent = "♨️";
-  }
-  else if(remH >= 24*10){
-    el.textContent = "🌋";
-  }
-  else{
-    el.textContent = "🔥";
+  if(remH <= 0) return "./assets/fire0.png";          // потух
+  if(remH < 24) return "./assets/fire1.png";          // < суток (тревожно/тлеет)
+  if(remH >= 24*25) return "./assets/fire5.png";      // 25+ суток (мощно)
+  if(remH >= 24*10) return "./assets/fire4.png";       // 10-25 суток
+  if(remH >= 24*5) return "./assets/fire3.png";       // 5-10 суток
+  return "./assets/fire2.png";                         // 1-5 суток (обычно)
+}
+
+if(fireIcon){
+  if(rem !== null && rem < 6 && rem > 0){
+    fireIcon.style.filter = "drop-shadow(0 0 18px rgba(255,90,107,.35)) drop-shadow(0 10px 24px rgba(0,0,0,.55))";
+  }else{
+    fireIcon.style.filter = "drop-shadow(0 10px 24px rgba(0,0,0,.55))";
   }
 }
 
