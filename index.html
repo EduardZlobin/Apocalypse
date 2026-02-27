@@ -282,9 +282,10 @@
         </div>
       </div>
       <div class="btnRow">
-        <button class="btn" id="btnLogin">Войти через Discord</button>
-        <button class="btn" id="btnLogout" style="display:none;">Выйти</button>
-      </div>
+  <button class="btn" id="btnLogin">Войти через Discord</button>
+  <button class="btn" id="btnLogout" style="display:none;">Выйти</button>
+  <button class="btn" id="btnAdmin" style="display:none;">Админ</button>
+</div>
     </div>
 
     <div class="grid">
@@ -405,6 +406,7 @@
     const SUPABASE_URL = "https://vskoiojbedimfdatepqy.supabase.co";
     const SUPABASE_KEY = "sb_publishable_VcqtTyBpAwlpJuwh_Wc0tw_IPxVIsgP";
     const SITE_URL = "https://eduardzlobin.github.io/Apocalypse";
+    const ADMIN_ID = "310f1196-021e-4251-b0e5-33d4d895dcc8";
     const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // UI
@@ -414,6 +416,7 @@
     const btnCoal = document.getElementById("btnCoal");
     const btnFuel = document.getElementById("btnFuel");
     const btnRefresh = document.getElementById("btnRefresh");
+    const btnAdmin = document.getElementById("btnAdmin");
 
     const remainText = document.getElementById("remainText");
     const burnText = document.getElementById("burnText");
@@ -541,6 +544,12 @@
       const loggedIn = !!state.session;
       btnLogin.style.display = loggedIn ? "none" : "";
       btnLogout.style.display = loggedIn ? "" : "none";
+
+      if(state.session?.user?.id === ADMIN_ID){
+        btnAdmin.style.display = "";
+        }else{
+        btnAdmin.style.display = "none";
+      }
 
       if(state.profile){
         coalCount.textContent = state.profile.coal ?? 0;
@@ -792,7 +801,10 @@ function renderEvent(){
 
     function startTicker(){
       if(state.tickTimer) clearInterval(state.tickTimer);
-      state.tickTimer = setInterval(()=>render(), 1000);
+      state.tickTimer = setInterval(()=>{
+  render();
+  renderEvent();
+}, 1000);
     }
 
     async function refreshAll(){
@@ -874,11 +886,16 @@ btnRapid.addEventListener("click", async () => {
   }
 
   await loadFire();
-  render();
-  renderEvent();
+await loadLogs();
+buildChart();
+render();
+renderEvent();
 });
     
     // ===== init
+    function checkAdmin(){
+  return state.session?.user?.id === ADMIN_ID;
+}
     (async function init(){
       const { data } = await sb.auth.getSession();
       state.session = data.session || null;
