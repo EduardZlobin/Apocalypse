@@ -881,14 +881,6 @@ function pickFireIcon(remH){
   return "./assets/fire2.png";                         // 1-5 суток (обычно)
 }
 
-if(fireIcon){
-  if(rem !== null && rem < 6 && rem > 0){
-    fireIcon.style.filter = "drop-shadow(0 0 18px rgba(255,90,107,.35)) drop-shadow(0 10px 24px rgba(0,0,0,.55))";
-  }else{
-    fireIcon.style.filter = "drop-shadow(0 10px 24px rgba(0,0,0,.55))";
-  }
-}
-
     // ===== Data loaders
     async function ensureProfile(){
       if(!state.session) return;
