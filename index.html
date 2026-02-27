@@ -784,26 +784,11 @@
       }
 
       if(state.fire){
-        const rem = effectiveRemainingHours();
-        updateFireEmoji(rem);
-        remainText.textContent = fmtHours(rem);
-        // обновляем иконку огня
-        const nextSrc = pickFireIcon(rem);
-        if(fireIcon && fireIcon.getAttribute("src") !== nextSrc){
-        fireIcon.style.opacity = "0.35";
-        setTimeout(()=>{
-          fireIcon.src = nextSrc;
-          fireIcon.style.opacity = "1";
-        }, 80);
-      }
-
-// fire
-if(state.fire){
   const rem = effectiveRemainingHours();
 
   remainText.textContent = fmtHours(rem);
 
-  // --- иконка
+  // обновляем иконку огня
   const nextSrc = pickFireIcon(rem);
   if(fireIcon && fireIcon.getAttribute("src") !== nextSrc){
     fireIcon.style.opacity = "0.35";
@@ -813,7 +798,7 @@ if(state.fire){
     }, 80);
   }
 
-  // --- тревожный glow
+  // (опционально) тревожный glow при малом времени
   if(fireIcon){
     if(rem !== null && rem < 6 && rem > 0){
       fireIcon.style.filter =
@@ -822,6 +807,9 @@ if(state.fire){
       fireIcon.style.filter = "drop-shadow(0 10px 24px rgba(0,0,0,.55))";
     }
   }
+
+  // дальше твой код burnText / untilText / status...
+}
 
 }
 
@@ -880,6 +868,7 @@ function pickFireIcon(remH){
   if(remH >= 24*5) return "./assets/fire3.png";       // 5-10 суток
   return "./assets/fire2.png";                         // 1-5 суток (обычно)
 }
+
 
     // ===== Data loaders
     async function ensureProfile(){
